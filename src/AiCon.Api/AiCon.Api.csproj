@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AWSSDK.BedrockRuntime" Version="3.7.*" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\AiCon.ServiceDefaults\AiCon.ServiceDefaults.csproj" />
   </ItemGroup>
 

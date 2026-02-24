@@ -1,6 +1,35 @@
 @AiCon.Api_HostAddress = http://localhost:5267
 
-GET {{AiCon.Api_HostAddress}}/weatherforecast/
+GET {{AiCon.Api_HostAddress}}/
 Accept: application/json
+
+###
+
+POST {{AiCon.Api_HostAddress}}/analyz
+Content-Type: application/json
+
+[
+  {
+    "legId": "LEG-001",
+    "previousAcRegNo": "TC-JFG",
+    "currentAcRegNo": "TC-KLM",
+    "previousCarrier": null,
+    "currentCarrier": null
+  },
+  {
+    "legId": "LEG-002",
+    "previousAcRegNo": null,
+    "currentAcRegNo": null,
+    "previousCarrier": "TK",
+    "currentCarrier": "PC"
+  },
+  {
+    "legId": "LEG-003",
+    "previousAcRegNo": "TC-AAA",
+    "currentAcRegNo": "TC-BBB",
+    "previousCarrier": "TK",
+    "currentCarrier": "XQ"
+  }
+]
 
 ###

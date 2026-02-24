@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/AiCon.Api/AiCon.Api.csproj" />
+    <Project Path="src/AiCon.AppHost/AiCon.AppHost.csproj" />
+    <Project Path="src/AiCon.ServiceDefaults/AiCon.ServiceDefaults.csproj" />
+  </Folder>
+</Solution>

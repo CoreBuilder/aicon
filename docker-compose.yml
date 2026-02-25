@@ -10,12 +10,11 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:8080
-      # Bedrock credentials (Bedrock:AccessKey / Bedrock:SecretKey)
+      # Bedrock — Bearer token API key (Bedrock:ApiKey)
       - Bedrock__Region=${BEDROCK_REGION:-eu-west-1}
       - Bedrock__ModelId=${BEDROCK_MODEL_ID:-eu.anthropic.claude-haiku-4-5-20251001-v1:0}
       - Bedrock__MaxTokens=${BEDROCK_MAX_TOKENS:-2048}
-      - Bedrock__AccessKey=${BEDROCK_ACCESS_KEY}
-      - Bedrock__SecretKey=${BEDROCK_SECRET_KEY}
+      - Bedrock__ApiKey=${BEDROCK_API_KEY}
       # Polly credentials (Polly:AccessKey / Polly:SecretKey)
       - Polly__Region=${POLLY_REGION:-eu-west-1}
       - Polly__VoiceId=${POLLY_VOICE_ID:-Amy}

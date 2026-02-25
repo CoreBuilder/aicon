@@ -27,10 +27,28 @@ public class FlightChangeAnalyzer
         var region = RegionEndpoint.GetBySystemName(_settings.Region);
 
         _client = !string.IsNullOrWhiteSpace(_settings.ApiKey)
-            ? new AmazonBedrockRuntimeClient(new BedrockApiKeyCredentials(_settings.ApiKey), region)
+            ? CreateClientWithApiKey(_settings.ApiKey, region)
             : !string.IsNullOrWhiteSpace(_settings.AccessKey) && !string.IsNullOrWhiteSpace(_settings.SecretKey)
                 ? new AmazonBedrockRuntimeClient(new BasicAWSCredentials(_settings.AccessKey, _settings.SecretKey), region)
                 : new AmazonBedrockRuntimeClient(region); // IAM role / env vars / ~/.aws/credentials
+    }
+
+    /// <summary>
+    /// Creates a Bedrock client that authenticates via a long-term API key (Bearer token).
+    /// Bedrock API keys are not standard AWS credentials — they must be sent as an
+    /// HTTP Authorization header instead of the normal SigV4 signature.
+    /// Using <see cref="AnonymousAWSCredentials"/> disables SigV4 so our header survives.
+    /// </summary>
+    private static AmazonBedrockRuntimeClient CreateClientWithApiKey(string apiKey, RegionEndpoint region)
+    {
+        var config = new AmazonBedrockRuntimeConfig { RegionEndpoint = region };
+        var client = new AmazonBedrockRuntimeClient(new AnonymousAWSCredentials(), config);
+        client.BeforeRequestEvent += (_, args) =>
+        {
+            if (args is WebServiceRequestEventArgs webArgs)
+                webArgs.Headers["Authorization"] = $"Bearer {apiKey}";
+        };
+        return client;
     }
 
     public async Task<IReadOnlyList<LegAnalysis>> AnalyzeAsync(List<FlightChange> changes)

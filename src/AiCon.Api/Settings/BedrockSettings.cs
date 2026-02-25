@@ -14,7 +14,15 @@ public class BedrockSettings
     public int MaxTokens { get; set; } = 2048;
 
     /// <summary>
-    /// Optional explicit AWS credentials.
+    /// Bedrock long-term API key (Bearer token).
+    /// Create it in AWS Console → Bedrock → API keys.
+    /// When set, takes priority over AccessKey/SecretKey.
+    /// For local dev, prefer User Secrets instead of putting the value here.
+    /// </summary>
+    public string? ApiKey { get; set; }
+
+    /// <summary>
+    /// Optional explicit AWS IAM credentials.
     /// Leave empty in production — the SDK will fall back to IAM role or
     /// environment variables (AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY).
     /// For local dev, prefer ~/.aws/credentials or User Secrets.

@@ -26,9 +26,11 @@ public class FlightChangeAnalyzer
 
         var region = RegionEndpoint.GetBySystemName(_settings.Region);
 
-        _client = !string.IsNullOrWhiteSpace(_settings.AccessKey) && !string.IsNullOrWhiteSpace(_settings.SecretKey)
-            ? new AmazonBedrockRuntimeClient(new BasicAWSCredentials(_settings.AccessKey, _settings.SecretKey), region)
-            : new AmazonBedrockRuntimeClient(region); // IAM role / env vars / ~/.aws/credentials
+        _client = !string.IsNullOrWhiteSpace(_settings.ApiKey)
+            ? new AmazonBedrockRuntimeClient(new BedrockApiKeyCredentials(_settings.ApiKey), region)
+            : !string.IsNullOrWhiteSpace(_settings.AccessKey) && !string.IsNullOrWhiteSpace(_settings.SecretKey)
+                ? new AmazonBedrockRuntimeClient(new BasicAWSCredentials(_settings.AccessKey, _settings.SecretKey), region)
+                : new AmazonBedrockRuntimeClient(region); // IAM role / env vars / ~/.aws/credentials
     }
 
     public async Task<IReadOnlyList<LegAnalysis>> AnalyzeAsync(List<FlightChange> changes)

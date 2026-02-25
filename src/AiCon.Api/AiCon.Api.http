@@ -1,4 +1,4 @@
-@AiCon.Api_HostAddress = https://localhost:7209
+@AiCon.Api_HostAddress = http://localhost:5267
 
 GET {{AiCon.Api_HostAddress}}/
 Accept: application/json

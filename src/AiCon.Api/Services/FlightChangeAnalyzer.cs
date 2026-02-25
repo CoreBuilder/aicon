@@ -1,11 +1,12 @@
-using System.Text.Json;
+using AiCon.Api.Models;
+using AiCon.Api.Settings;
 using Amazon;
 using Amazon.BedrockRuntime;
 using Amazon.BedrockRuntime.Model;
 using Amazon.Runtime;
-using AiCon.Api.Models;
-using AiCon.Api.Settings;
 using Microsoft.Extensions.Options;
+using System.Text;
+using System.Text.Json;
 
 namespace AiCon.Api.Services;
 
@@ -39,7 +40,7 @@ public class FlightChangeAnalyzer
     /// HTTP Authorization header instead of the normal SigV4 signature.
     /// Using <see cref="AnonymousAWSCredentials"/> disables SigV4 so our header survives.
     /// </summary>
-    private static AmazonBedrockRuntimeClient CreateClientWithApiKey(string apiKey, RegionEndpoint region)
+    private static AmazonBedrockRuntimeClient CreateClientWithApiKey2(string apiKey, RegionEndpoint region)
     {
         var config = new AmazonBedrockRuntimeConfig { RegionEndpoint = region };
         var client = new AmazonBedrockRuntimeClient(new AnonymousAWSCredentials(), config);
@@ -50,6 +51,22 @@ public class FlightChangeAnalyzer
         };
         return client;
     }
+
+    // Doğru API key kullanımı için
+    private static AmazonBedrockRuntimeClient CreateClientWithApiKey(string apiKey, RegionEndpoint region)
+    {
+        var config = new AmazonBedrockRuntimeConfig
+        {
+            RegionEndpoint = region
+        };
+
+        // API key'i environment variable olarak ayarlayın
+        Environment.SetEnvironmentVariable("AWS_BEARER_TOKEN_BEDROCK", apiKey);
+
+        var client = new AmazonBedrockRuntimeClient(new AnonymousAWSCredentials(), config);
+        return client;
+    }
+
 
     public async Task<IReadOnlyList<LegAnalysis>> AnalyzeAsync(List<FlightChange> changes)
     {
@@ -71,22 +88,23 @@ public class FlightChangeAnalyzer
 
     private InvokeModelRequest BuildRequest(List<FlightChange> changes)
     {
-        var payload = new
+        var payload = JsonSerializer.Serialize(new
         {
             anthropic_version = "bedrock-2023-05-31",
-            max_tokens = _settings.MaxTokens,
+            max_tokens = 512,
+            temperature = 0.5,
             messages = new[]
             {
                 new { role = "user", content = BuildPrompt(changes) }
             }
-        };
+        });
 
         return new InvokeModelRequest
         {
             ModelId = _settings.ModelId,
             ContentType = "application/json",
             Accept = "application/json",
-            Body = new MemoryStream(JsonSerializer.SerializeToUtf8Bytes(payload))
+            Body = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(payload)),
         };
     }
 
@@ -150,10 +168,14 @@ public class FlightChangeAnalyzer
                 .GetProperty("text")
                 .GetString() ?? string.Empty;
 
-            _logger.LogDebug("Bedrock raw response:\n{Response}", text);
+            _logger.LogInformation("Bedrock raw response:\n{Response}", text);
+
+            // Claude sometimes wraps JSON in markdown code fences (```json ... ```)
+            // even when instructed not to — strip them before deserializing.
+            var json = StripMarkdownCodeFences(text);
 
             var results = JsonSerializer.Deserialize<List<LegAnalysis>>(
-                text,
+                json,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
             if (results is { Count: > 0 })
@@ -167,6 +189,24 @@ public class FlightChangeAnalyzer
         }
 
         return FallbackAnalysis(original);
+    }
+
+    /// <summary>
+    /// Strips markdown code fences (e.g. ```json ... ```) that Claude sometimes
+    /// adds around JSON output despite being instructed not to.
+    /// </summary>
+    private static string StripMarkdownCodeFences(string text)
+    {
+        var trimmed = text.Trim();
+        if (!trimmed.StartsWith("```"))
+            return trimmed;
+
+        var firstNewline = trimmed.IndexOf('\n');
+        var lastFence = trimmed.LastIndexOf("```");
+        if (firstNewline >= 0 && lastFence > firstNewline)
+            return trimmed[(firstNewline + 1)..lastFence].Trim();
+
+        return trimmed;
     }
 
     private static IReadOnlyList<LegAnalysis> FallbackAnalysis(List<FlightChange> changes) =>

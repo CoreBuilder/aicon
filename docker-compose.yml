@@ -8,3 +8,10 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:8080
+      # AWS credentials — shell env vars veya .env dosyasından okunur
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=${AWS_REGION:-eu-west-1}
+    # Alternatif: ~/.aws/credentials mount etmek istersen aşağıyı aç
+    # volumes:
+    #   - ${HOME}/.aws:/root/.aws:ro

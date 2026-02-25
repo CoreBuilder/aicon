@@ -88,7 +88,7 @@ public class FlightChangeAnalyzer
 
         var changeBlock = string.Join("\n", lines);
 
-        return $"""
+        return $$"""
             You are a senior flight operations analyst. Analyze each flight leg change below.
 
             Rules:
@@ -107,15 +107,15 @@ public class FlightChangeAnalyzer
 
             Output schema (one object per LegId):
             [
-              {{
+              {
                 "legId": "<string>",
                 "title": "<emoji + short title>",
                 "analysis": "<detailed English explanation>"
-              }}
+              }
             ]
 
             Flight changes to analyze:
-            {changeBlock}
+            {{changeBlock}}
             """;
     }
 

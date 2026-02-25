@@ -9,7 +9,11 @@ builder.AddServiceDefaults();
 builder.Services.Configure<BedrockSettings>(
     builder.Configuration.GetSection(BedrockSettings.SectionName));
 
+builder.Services.Configure<PollySettings>(
+    builder.Configuration.GetSection(PollySettings.SectionName));
+
 builder.Services.AddSingleton<FlightChangeAnalyzer>();
+builder.Services.AddSingleton<TextToSpeechService>();
 
 var app = builder.Build();
 
@@ -27,5 +31,16 @@ app.MapPost("/analyz", async (List<FlightChange> changes, FlightChangeAnalyzer a
 })
 .WithName("AnalyzFlightChanges")
 .WithSummary("Analyzes flight leg changes using AWS Bedrock (Claude) and returns per-leg human-readable summaries.");
+
+app.MapPost("/speak", async (SpeakRequest request, TextToSpeechService tts) =>
+{
+    if (string.IsNullOrWhiteSpace(request.Text))
+        return Results.BadRequest(new { error = "text cannot be empty" });
+
+    var audioStream = await tts.SynthesizeAsync(request.Text, request.VoiceId);
+    return Results.Stream(audioStream, "audio/mpeg");
+})
+.WithName("SpeakText")
+.WithSummary("Converts text to speech via AWS Polly and streams back an MP3 audio binary (no file saved).");
 
 app.Run();
